@@ -53,7 +53,6 @@ def generate_negative_examples(data, save_csv: bool = True, output_dir: Path = P
 
         output_path = output_dir / output_filename
         result_df.to_csv(output_path, sep=";", index=False)
-        print(f"Trainingsdaten gespeichert in: {output_path}")
 
         return output_path
 
@@ -146,3 +145,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
