@@ -5,6 +5,60 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree
 import matplotlib.pyplot as plt
 
 
+def generate_negative_examples(data, save_csv: bool = True, output_dir: Path = Path("output")):
+
+    if isinstance(data, (str, Path)):
+        input_path = Path(data)
+        df = pd.read_csv(input_path, sep=";")
+    else:
+        input_path = None
+        df = data
+
+    feature_columns = [col for col in df.columns if col not in ['metric', 'suitable']]
+    training_data = []
+    training_data.extend(df.to_dict('records'))
+    metric_groups = df.groupby('metric')
+
+    for metric_name, group in metric_groups:
+        positive_tuples = set()
+        for _, row in group.iterrows():
+            tuple_repr = tuple(int(row[f]) for f in feature_columns)
+            positive_tuples.add(tuple_repr)
+
+        for _, positive_row in group.iterrows():
+            for feature in feature_columns:
+                negative_example = positive_row.to_dict().copy()
+                original_value = int(positive_row[feature])
+                negative_example[feature] = 1 - original_value
+                neg_tuple = tuple(int(negative_example[f]) for f in feature_columns)
+
+                if neg_tuple not in positive_tuples:
+                    negative_example['suitable'] = 0
+                    training_data.append(negative_example)
+
+    result_df = pd.DataFrame(training_data)
+
+    result_df = result_df.sort_values(
+        by=['suitable', 'metric'],
+        ascending=[False, True]
+    ).reset_index(drop=True)
+
+    if save_csv:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        if input_path:
+            output_filename = f"training_data_{input_path.stem}.csv"
+        else:
+            output_filename = "training_data.csv"
+
+        output_path = output_dir / output_filename
+        result_df.to_csv(output_path, sep=";", index=False)
+        print(f"Trainingsdaten gespeichert in: {output_path}")
+
+        return output_path
+
+    return result_df
+
 def load_metric_matrix(csv_path: Path):
     data = pd.read_csv(csv_path, sep=";")
 
@@ -81,7 +135,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    X, y = load_metric_matrix(args.csv_path)
+    X, y = load_metric_matrix(generate_negative_examples(args.csv_path))
     clf = train_decision_tree(X, y, max_depth=args.max_depth, min_samples_leaf=args.min_samples_leaf)
 
     out_png = args.out_path / "decision_tree.png"
