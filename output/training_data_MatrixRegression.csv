@@ -1,4 +1,4 @@
-metric;Sensitive_to_outliers;Absolute;Direction_aware;Average_error;Scale_dependent;Stable_near_zero;suitable
+metric;Outlier Sensitive;Absolute;Error Directionality;Error Averaging;Scale Dependent;Stability Around Zero;suitable
 MAE;0;1;0;1;1;1;1
 MAPE;1;0;0;1;0;0;1
 MASE;0;0;0;1;0;1;1
